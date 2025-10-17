@@ -1,4 +1,4 @@
-package com.profesores.client;
+package com.profesores.asesorias.client;
 
 import java.util.List;
 import org.springframework.cloud.openfeign.FeignClient;

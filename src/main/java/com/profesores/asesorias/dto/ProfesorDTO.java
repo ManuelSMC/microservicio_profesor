@@ -1,7 +1,7 @@
 package com.profesores.asesorias.dto;
 
-import lombok.Data;
 import java.util.List;
+import lombok.Data;
 
 @Data
 public class ProfesorDTO {
@@ -12,5 +12,5 @@ public class ProfesorDTO {
     private String descripcion;
     private Boolean status;
     private List<Integer> divisionIds; // Para entrada en create/update
-    private List<DivisionDto> divisions; // Para salida con info de divisiones
+    private List<DivisionDTO> divisions; // Para salida con info de divisiones
 }

@@ -30,9 +30,9 @@ public class ProfesorServiceImpl implements ProfesorService {
         Set<Integer> allDivisionIds = profesores.stream()
                 .flatMap(p -> p.getProfesorDivisiones().stream().map(ProfesorDivision::getDivisionID))
                 .collect(Collectors.toSet());
-        List<DivisionDto> divisionDtos = divisionClient.getDivisionesByIds(new ArrayList<>(allDivisionIds));
-        Map<Integer, DivisionDto> divisionMap = divisionDtos.stream()
-                .collect(Collectors.toMap(DivisionDto::getIdDivision, d -> d));
+        List<DivisionDTO> divisionDtos = divisionClient.getDivisionesByIds(new ArrayList<>(allDivisionIds));
+        Map<Integer, DivisionDTO> divisionMap = divisionDtos.stream()
+                .collect(Collectors.toMap(DivisionDTO::getIdDivision, d -> d));
 
         return profesores.stream().map(p -> toDto(p, divisionMap)).collect(Collectors.toList());
     }
@@ -43,9 +43,9 @@ public class ProfesorServiceImpl implements ProfesorService {
                 .orElseThrow(() -> new RuntimeException("Profesor no encontrado con id: " + id));
         Set<Integer> divisionIds = profesor.getProfesorDivisiones().stream()
                 .map(ProfesorDivision::getDivisionID).collect(Collectors.toSet());
-        List<DivisionDto> divisionDtos = divisionClient.getDivisionesByIds(new ArrayList<>(divisionIds));
-        Map<Integer, DivisionDto> divisionMap = divisionDtos.stream()
-                .collect(Collectors.toMap(DivisionDto::getIdDivision, d -> d));
+        List<DivisionDTO> divisionDtos = divisionClient.getDivisionesByIds(new ArrayList<>(divisionIds));
+        Map<Integer, DivisionDTO> divisionMap = divisionDtos.stream()
+                .collect(Collectors.toMap(DivisionDTO::getIdDivision, d -> d));
         return toDto(profesor, divisionMap);
     }
 
@@ -159,7 +159,7 @@ public class ProfesorServiceImpl implements ProfesorService {
         return getById(updated.getIdProfesor());
     }
 
-    private ProfesorDTO toDto(Profesor profesor, Map<Integer, DivisionDto> divisionMap) {
+    private ProfesorDTO toDto(Profesor profesor, Map<Integer, DivisionDTO> divisionMap) {
         ProfesorDTO dto = new ProfesorDTO();
         dto.setIdProfesor(profesor.getIdProfesor());
         dto.setNombre(profesor.getNombre());

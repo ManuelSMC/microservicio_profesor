@@ -1,20 +1,22 @@
 package com.profesores.asesorias.controller;
 
+import com.profesores.asesorias.dto.ProfesorDTO;
+import com.profesores.asesorias.service.ProfesorService;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-
-import com.profesores.asesorias.entity.Profesor;
-import com.profesores.asesorias.entity.Division;
-import com.profesores.asesorias.dto.ProfesorDTO;
-import com.profesores.asesorias.repository.ProfesorRepository;
-import com.profesores.asesorias.repository.DivisionRepository;
-import com.profesores.asesorias.service.ProfesorService;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @CrossOrigin(origins = "*")
 @RestController
@@ -22,51 +24,34 @@ import com.profesores.asesorias.service.ProfesorService;
 public class ProfesorController {
 
     @Autowired
-    private ProfesorRepository profesorRepository;
-
-    @Autowired
     private ProfesorService profesorService;
-
-    @Autowired
-    private DivisionRepository divisionRepository;
 
     // Crear nuevo profesor
     @PostMapping
     public ResponseEntity<?> crearProfesor(@RequestBody ProfesorDTO profesorDTO) {
         try {
-            Profesor profesor = new Profesor();
-            profesor.setNombre(profesorDTO.getNombre());
-            profesor.setClave(profesorDTO.getClave());
-            profesor.setDescripcion(profesorDTO.getDescripcion());
-            profesor.setStatus(profesorDTO.getStatus());
-            if (profesorDTO.getDivisionId() != null) {
-                Division division = divisionRepository.findById(profesorDTO.getDivisionId())
-                    .orElseThrow(() -> new RuntimeException("División no encontrada con id: " + profesorDTO.getDivisionId()));
-                profesor.setDivision(division);
-            }
-            profesor.setIdProfesor(null);
-            Profesor savedProfesor = profesorService.crearProfesor(profesor);
-            return ResponseEntity.ok(savedProfesor);
+            ProfesorDTO savedDto = profesorService.create(profesorDTO);
+            return ResponseEntity.ok(savedDto);
         } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body("Error al crear el profesor: " + e.getMessage());
+                    .body("Error al crear el profesor: " + e.getMessage());
         }
     }
 
     // Listar todos los profesores
     @GetMapping
-    public ResponseEntity<List<Profesor>> getAll() {
-        List<Profesor> profesores = profesorRepository.findAll();
+    public ResponseEntity<List<ProfesorDTO>> getAll() {
+        List<ProfesorDTO> profesores = profesorService.getAll();
         return ResponseEntity.ok(profesores);
     }
 
     // Buscar profesor por ID
     @GetMapping("/{id}")
-    public ResponseEntity<Profesor> getById(@PathVariable Integer id) {
-        Optional<Profesor> profesor = profesorRepository.findById(id);
-        if (profesor.isPresent()) {
-            return ResponseEntity.ok(profesor.get());
-        } else {
+    public ResponseEntity<ProfesorDTO> getById(@PathVariable Integer id) {
+        try {
+            ProfesorDTO dto = profesorService.getById(id);
+            return ResponseEntity.ok(dto);
+        } catch (RuntimeException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
     }
@@ -75,65 +60,66 @@ public class ProfesorController {
     @PutMapping("/{id_profesor}")
     public ResponseEntity<?> editar(@PathVariable Integer id_profesor, @RequestBody ProfesorDTO profesorDTO) {
         try {
-            Optional<Profesor> profesorOpt = profesorRepository.findById(id_profesor);
-            if (profesorOpt.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            ProfesorDTO updatedDto = profesorService.update(id_profesor, profesorDTO);
+            return ResponseEntity.ok(updatedDto);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("Profesor no encontrado con ID: " + id_profesor);
-            }
-            Profesor profesorExistente = profesorOpt.get();
-            // Actualizar solo los campos que vienen en el request (no nulos)
-            if (profesorDTO.getNombre() != null) {
-                profesorExistente.setNombre(profesorDTO.getNombre());
-            }
-            if (profesorDTO.getClave() != null) {
-                profesorExistente.setClave(profesorDTO.getClave());
-            }
-            if (profesorDTO.getDescripcion() != null) {
-                profesorExistente.setDescripcion(profesorDTO.getDescripcion());
-            }
-            if (profesorDTO.getDivisionId() != null) {
-                Division division = divisionRepository.findById(profesorDTO.getDivisionId())
-                    .orElseThrow(() -> new RuntimeException("División no encontrada con id: " + profesorDTO.getDivisionId()));
-                profesorExistente.setDivision(division);
-            }
-            // Para el campo booleano status, no verificamos null, ya que siempre tiene un valor
-            profesorExistente.setStatus(profesorDTO.getStatus());
-
-            Profesor profesorActualizado = profesorRepository.save(profesorExistente);
-            return ResponseEntity.ok(profesorActualizado);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Error al actualizar el profesor: " + e.getMessage());
+                    .body("Error al actualizar el profesor: " + e.getMessage());
         }
     }
 
-    // PUT habilitar
+    // Habilitar profesor
     @PutMapping("/{id}/habilitar")
-    public ResponseEntity<Profesor> habilitarProfesor(@PathVariable Integer id) {
+    public ResponseEntity<ProfesorDTO> habilitarProfesor(@PathVariable Integer id) {
         try {
-            Profesor updated = profesorService.habilitarProfesor(id);
+            ProfesorDTO updated = profesorService.habilitarProfesor(id);
             return ResponseEntity.ok(updated);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
     }
 
-    // PUT deshabilitar
+    // Deshabilitar profesor
     @PutMapping("/{id}/deshabilitar")
-    public ResponseEntity<Profesor> deshabilitarProfesor(@PathVariable Integer id) {
+    public ResponseEntity<ProfesorDTO> deshabilitarProfesor(@PathVariable Integer id) {
         try {
-            Profesor updated = profesorService.deshabilitarProfesor(id);
+            ProfesorDTO updated = profesorService.deshabilitarProfesor(id);
             return ResponseEntity.ok(updated);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
     }
 
-    // DELETE 
+    // Asignar división a profesor
+    @PostMapping("/{id}/assign-division/{divisionId}")
+    public ResponseEntity<Void> assignDivision(@PathVariable Integer id, @PathVariable Integer divisionId) {
+        try {
+            profesorService.assignDivisionToProfesor(id, divisionId);
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+    }
+
+    // Remover división de profesor
+    @PostMapping("/{id}/remove-division/{divisionId}")
+    public ResponseEntity<Void> removeDivision(@PathVariable Integer id, @PathVariable Integer divisionId) {
+        try {
+            profesorService.removeDivisionFromProfesor(id, divisionId);
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+    }
+
+    // Borrar profesor
     @DeleteMapping("/{id}")
     public ResponseEntity<Map<String, Object>> deleteProfesor(@PathVariable Integer id) {
         try {
-            String message = profesorService.deleteProfesor(id);
+            String message = profesorService.delete(id);
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", message);
